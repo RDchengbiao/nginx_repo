@@ -182,7 +182,9 @@ static char        *ngx_signal;
 
 static char **ngx_os_environ;
 
-
+/*
+ * ngx_cdecl宏显示生命调用约定，跨平台有用
+ */
 int ngx_cdecl
 main(int argc, char *const *argv)
 {
@@ -194,11 +196,12 @@ main(int argc, char *const *argv)
     ngx_core_conf_t  *ccf;
 
     ngx_debug_init();
-
+    //初始化nginx自定义的错误输出列表
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
     }
 
+    //获取运行nginx命令时的参数
     if (ngx_get_options(argc, argv) != NGX_OK) {
         return 1;
     }
@@ -213,20 +216,33 @@ main(int argc, char *const *argv)
 
     /* TODO */ ngx_max_sockets = -1;
 
+    /*
+     * 初始化时间
+     */
     ngx_time_init();
-
+    /*
+     * 支持正则
+     */
 #if (NGX_PCRE)
     ngx_regex_init();
 #endif
-
+    /*
+     * 获取PID
+     */
     ngx_pid = ngx_getpid();
 
+    /*
+     * 初始化日志
+     */
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
         return 1;
     }
 
-    /* STUB */
+    /*
+     * STUB 
+     * 支持OPENSSL安全协议
+     */
 #if (NGX_OPENSSL)
     ngx_ssl_init(log);
 #endif
@@ -235,24 +251,27 @@ main(int argc, char *const *argv)
      * init_cycle->log is required for signal handlers and
      * ngx_process_options()
      */
-
+    /*
+     * 内存管理初始化
+     */
     ngx_memzero(&init_cycle, sizeof(ngx_cycle_t));
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
-
+    //创建内存池
     init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
         return 1;
     }
-
+    //保存传入的启动参数到全局变量
     if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) {
         return 1;
     }
 
+    //保存传入的启动参数到init_cycle结构
     if (ngx_process_options(&init_cycle) != NGX_OK) {
         return 1;
     }
-
+    //获取运行环境中一些相关参数
     if (ngx_os_init(log) != NGX_OK) {
         return 1;
     }
@@ -260,11 +279,11 @@ main(int argc, char *const *argv)
     /*
      * ngx_crc32_table_init() requires ngx_cacheline_size set in ngx_os_init()
      */
-
+    //建立循环冗余校验表
     if (ngx_crc32_table_init() != NGX_OK) {
         return 1;
     }
-
+    //对已有socket的继承
     if (ngx_add_inherited_sockets(&init_cycle) != NGX_OK) {
         return 1;
     }
@@ -272,7 +291,7 @@ main(int argc, char *const *argv)
     if (ngx_preinit_modules() != NGX_OK) {
         return 1;
     }
-
+    //建立新的cycle结构
     cycle = ngx_init_cycle(&init_cycle);
     if (cycle == NULL) {
         if (ngx_test_config) {
@@ -439,7 +458,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
     u_char           *p, *v, *inherited;
     ngx_int_t         s;
     ngx_listening_t  *ls;
-
+    //设置Nginx的环境变量
     inherited = (u_char *) getenv(NGINX_VAR);
 
     if (inherited == NULL) {
@@ -468,7 +487,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
             }
 
             v = p + 1;
-
+            //保存解析出来的socket
             ls = ngx_array_push(&cycle->listening);
             if (ls == NULL) {
                 return NGX_ERROR;
@@ -485,9 +504,9 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
                       "invalid socket number \"%s\" in " NGINX_VAR
                       " environment variable, ignoring", v);
     }
-
+    //标记继承结束
     ngx_inherited = 1;
-
+    //对cycle中除了fd(socket)之外的成员初始化
     return ngx_set_inherited_sockets(cycle);
 }
 
@@ -895,7 +914,7 @@ ngx_process_options(ngx_cycle_t *cycle)
         if (p == NULL) {
             return NGX_ERROR;
         }
-
+        //获取nginx当前的工作路径
         if (ngx_getcwd(p, NGX_MAX_PATH) == 0) {
             ngx_log_stderr(ngx_errno, "[emerg]: " ngx_getcwd_n " failed");
             return NGX_ERROR;
@@ -929,7 +948,7 @@ ngx_process_options(ngx_cycle_t *cycle)
     } else {
         ngx_str_set(&cycle->conf_file, NGX_CONF_PATH);
     }
-
+    //判断是否是完整路径
     if (ngx_conf_full_name(cycle, &cycle->conf_file, 0) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -944,7 +963,7 @@ ngx_process_options(ngx_cycle_t *cycle)
             break;
         }
     }
-
+    //ngx_conf_params全局变量初始化conf_param
     if (ngx_conf_params) {
         cycle->conf_param.len = ngx_strlen(ngx_conf_params);
         cycle->conf_param.data = ngx_conf_params;
