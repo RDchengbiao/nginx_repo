@@ -349,6 +349,7 @@ main(int argc, char *const *argv)
     }
 
     if (!ngx_inherited && ccf->daemon) {
+        //创建守护进程
         if (ngx_daemon(cycle->log) != NGX_OK) {
             return 1;
         }
@@ -1032,7 +1033,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 
     ngx_conf_init_value(ccf->worker_processes, 1);
     ngx_conf_init_value(ccf->debug_points, 0);
-
+//定义了nginx在多核cpu上的调度规则
 #if (NGX_HAVE_CPU_AFFINITY)
 
     if (!ccf->cpu_affinity_auto
@@ -1048,11 +1049,11 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 
 #endif
 
-
+    //设置nginx进程的pid
     if (ccf->pid.len == 0) {
         ngx_str_set(&ccf->pid, NGX_PID_PATH);
     }
-
+    //判断nginx进程id文件的路径是否完整
     if (ngx_conf_full_name(cycle, &ccf->pid, 0) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -1063,7 +1064,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
     if (ccf->oldpid.data == NULL) {
         return NGX_CONF_ERROR;
     }
-
+    //更新旧进程id中的数据
     ngx_memcpy(ngx_cpymem(ccf->oldpid.data, ccf->pid.data, ccf->pid.len),
                NGX_OLDPID_EXT, sizeof(NGX_OLDPID_EXT));
 
@@ -1075,25 +1076,26 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
         struct passwd  *pwd;
 
         ngx_set_errno(0);
-        pwd = getpwnam(NGX_USER);
+        pwd = getpwnam(NGX_USER);   //获取运行nginx的用户相关信息
         if (pwd == NULL) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "getpwnam(\"" NGX_USER "\") failed");
             return NGX_CONF_ERROR;
         }
 
+        //保存nginx运行用户的相关信息
         ccf->username = NGX_USER;
         ccf->user = pwd->pw_uid;
 
         ngx_set_errno(0);
-        grp = getgrnam(NGX_GROUP);
+        grp = getgrnam(NGX_GROUP);  //获取运行nginx的用户组相关信息
         if (grp == NULL) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                           "getgrnam(\"" NGX_GROUP "\") failed");
             return NGX_CONF_ERROR;
         }
 
-        ccf->group = grp->gr_gid;
+        ccf->group = grp->gr_gid;   //保存nginx运行用户组的id
     }
 
 
@@ -1104,7 +1106,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
     if (ngx_conf_full_name(cycle, &ccf->lock_file, 0) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
-
+    //获取nginx.lock文件，并保存到cycle->lock_file成员中
     {
     ngx_str_t  lock_file;
 

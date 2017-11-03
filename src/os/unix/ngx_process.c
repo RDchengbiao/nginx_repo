@@ -288,9 +288,9 @@ ngx_init_signals(ngx_log_t *log)
 
     for (sig = signals; sig->signo != 0; sig++) {
         ngx_memzero(&sa, sizeof(struct sigaction));
-        sa.sa_handler = sig->handler;
+        sa.sa_handler = sig->handler;   //信号的处理函数
         sigemptyset(&sa.sa_mask);
-        if (sigaction(sig->signo, &sa, NULL) == -1) {
+        if (sigaction(sig->signo, &sa, NULL) == -1) {   //设置信号处理方式
 #if (NGX_VALGRIND)
             ngx_log_error(NGX_LOG_ALERT, log, ngx_errno,
                           "sigaction(%s) failed, ignored", sig->signame);
@@ -397,7 +397,7 @@ ngx_signal_handler(int signo)
         break;
 
     case NGX_PROCESS_WORKER:
-    case NGX_PROCESS_HELPER:
+    case NGX_PROCESS_HELPER:    //工作进程和帮助对不同的信号进行处理
         switch (signo) {
 
         case ngx_signal_value(NGX_NOACCEPT_SIGNAL):

@@ -14,7 +14,7 @@ ngx_daemon(ngx_log_t *log)
 {
     int  fd;
 
-    switch (fork()) {
+    switch (fork()) {   //生成一个子进程，准备启动守护进程
     case -1:
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "fork() failed");
         return NGX_ERROR;
@@ -42,12 +42,12 @@ ngx_daemon(ngx_log_t *log)
         return NGX_ERROR;
     }
 
-    if (dup2(fd, STDIN_FILENO) == -1) {
+    if (dup2(fd, STDIN_FILENO) == -1) {     //设置守护进程的输入终端
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "dup2(STDIN) failed");
         return NGX_ERROR;
     }
 
-    if (dup2(fd, STDOUT_FILENO) == -1) {
+    if (dup2(fd, STDOUT_FILENO) == -1) {    //设置守护进程的输出终端
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "dup2(STDOUT) failed");
         return NGX_ERROR;
     }
@@ -59,7 +59,7 @@ ngx_daemon(ngx_log_t *log)
     }
 #endif
 
-    if (fd > STDERR_FILENO) {
+    if (fd > STDERR_FILENO) {       //设置守护进程的错误终端
         if (close(fd) == -1) {
             ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "close() failed");
             return NGX_ERROR;

@@ -71,11 +71,11 @@ ngx_conf_param(ngx_conf_t *cf)
     if (param->len == 0) {
         return NGX_CONF_OK;
     }
-
+    //以下为初始化解析配置文件时要用的保存配置信息的结构体和指示解析位置的"游标"
     ngx_memzero(&conf_file, sizeof(ngx_conf_file_t));
 
     ngx_memzero(&b, sizeof(ngx_buf_t));
-
+    //以下为初始化解析配置文件时用到的位置标识
     b.start = param->data;
     b.pos = param->data;
     b.last = param->data + param->len;
@@ -89,7 +89,7 @@ ngx_conf_param(ngx_conf_t *cf)
     cf->conf_file = &conf_file;
     cf->conf_file->buffer = &b;
 
-    rv = ngx_conf_parse(cf, NULL);
+    rv = ngx_conf_parse(cf, NULL);  //执行具体配置文件解析
 
     cf->conf_file = NULL;
 

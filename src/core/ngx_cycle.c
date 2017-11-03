@@ -229,7 +229,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         module = cycle->modules[i]->ctx;
 
         if (module->create_conf) {
-            rv = module->create_conf(cycle);
+            rv = module->create_conf(cycle);    //建立core模块上下文结构
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
                 return NULL;
@@ -267,13 +267,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 #if 0
     log->log_level = NGX_LOG_DEBUG_ALL;
 #endif
-
+    //解析nginx配置文件
     if (ngx_conf_param(&conf) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
         return NULL;
     }
-
+    //对nginx标准配置文件解析
     if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
@@ -329,11 +329,11 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             || ngx_strcmp(ccf->pid.data, old_ccf->pid.data) != 0)
         {
             /* new pid file name */
-
+            //创建新的pid文件
             if (ngx_create_pidfile(&ccf->pid, log) != NGX_OK) {
                 goto failed;
             }
-
+            //删除旧的pid文件
             ngx_delete_pidfile(old_cycle);
         }
     }
@@ -497,9 +497,9 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     /* handle the listening sockets */
 
-    if (old_cycle->listening.nelts) {
+    if (old_cycle->listening.nelts) {   //旧的监听socket正在使用
         ls = old_cycle->listening.elts;
-        for (i = 0; i < old_cycle->listening.nelts; i++) {
+        for (i = 0; i < old_cycle->listening.nelts; i++) {  //设置原有监听socket的标识
             ls[i].remain = 0;
         }
 
@@ -518,7 +518,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                 if (ls[i].type != nls[n].type) {
                     continue;
                 }
-
+                //赋值原来监听socket的标志信息
                 if (ngx_cmp_sockaddr(nls[n].sockaddr, nls[n].socklen,
                                      ls[i].sockaddr, ls[i].socklen, 1)
                     == NGX_OK)
@@ -576,7 +576,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                     break;
                 }
             }
-
+            //socket未打开时，需要打开
             if (nls[n].fd == (ngx_socket_t) -1) {
                 nls[n].open = 1;
 #if (NGX_HAVE_DEFERRED_ACCEPT && defined SO_ACCEPTFILTER)
@@ -608,7 +608,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 #endif
         }
     }
-
+    //打开open标志位1的监听socket
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }
