@@ -28,11 +28,11 @@ void *ngx_calloc(size_t size, ngx_log_t *log);
 
 #if (NGX_HAVE_POSIX_MEMALIGN || NGX_HAVE_MEMALIGN)
 
-void *ngx_memalign(size_t alignment, size_t size, ngx_log_t *log);
+void *ngx_memalign(size_t alignment, size_t size, ngx_log_t *log);		//对齐内存并分配内存
 
 #else
 
-#define ngx_memalign(alignment, size, log)  ngx_alloc(size, log)
+#define ngx_memalign(alignment, size, log)  ngx_alloc(size, log)		//直接分配内存
 
 #endif
 

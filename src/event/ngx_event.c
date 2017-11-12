@@ -439,9 +439,9 @@ ngx_event_module_init(ngx_cycle_t *cycle)
                       "using the \"%s\" event method", ecf->name);
     }
 
-    ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
+    ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);		//获取配置上下文
 
-    ngx_timer_resolution = ccf->timer_resolution;
+    ngx_timer_resolution = ccf->timer_resolution;		//提取timer_resolution参数
 
 #if !(NGX_WIN32)
     {
@@ -635,7 +635,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         sa.sa_handler = ngx_timer_signal_handler;
         sigemptyset(&sa.sa_mask);
 
-        if (sigaction(SIGALRM, &sa, NULL) == -1) {
+        if (sigaction(SIGALRM, &sa, NULL) == -1) {		//初始化一个SIGALRM信号
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "sigaction(SIGALRM) failed");
             return NGX_ERROR;
@@ -646,7 +646,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         itv.it_value.tv_sec = ngx_timer_resolution / 1000;
         itv.it_value.tv_usec = (ngx_timer_resolution % 1000 ) * 1000;
 
-        if (setitimer(ITIMER_REAL, &itv, NULL) == -1) {
+        if (setitimer(ITIMER_REAL, &itv, NULL) == -1) {		//每隔一段时间产生一个SIGALRM信号
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setitimer() failed");
         }

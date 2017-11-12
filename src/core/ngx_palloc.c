@@ -20,7 +20,7 @@ ngx_create_pool(size_t size, ngx_log_t *log)
 {
     ngx_pool_t  *p;
 
-    p = ngx_memalign(NGX_POOL_ALIGNMENT, size, log);
+    p = ngx_memalign(NGX_POOL_ALIGNMENT, size, log);		//分配进行了内存对齐操作的内存
     if (p == NULL) {
         return NULL;
     }
@@ -82,12 +82,12 @@ ngx_destroy_pool(ngx_pool_t *pool)
 
     for (l = pool->large; l; l = l->next) {
         if (l->alloc) {
-            ngx_free(l->alloc);
+            ngx_free(l->alloc);		//释放大数据块内存
         }
     }
 
     for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
-        ngx_free(p);
+        ngx_free(p);		//释放内存池本身占用的内存
 
         if (n == NULL) {
             break;
@@ -161,7 +161,7 @@ ngx_palloc_small(ngx_pool_t *pool, size_t size, ngx_uint_t align)
         }
 
         if ((size_t) (p->d.end - m) >= size) {
-            p->d.last = m + size;
+            p->d.last = m + size;		//从nginx内存池中划出内存空间
 
             return m;
         }
@@ -183,7 +183,7 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
 
     psize = (size_t) (pool->d.end - (u_char *) pool);
 
-    m = ngx_memalign(NGX_POOL_ALIGNMENT, psize, pool->log);
+    m = ngx_memalign(NGX_POOL_ALIGNMENT, psize, pool->log);		//创建新的内存池节点
     if (m == NULL) {
         return NULL;
     }
@@ -196,11 +196,11 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
 
     m += sizeof(ngx_pool_data_t);
     m = ngx_align_ptr(m, NGX_ALIGNMENT);
-    new->d.last = m + size;
+    new->d.last = m + size;		//分配要申请的大小为size的内存空间
 
     for (p = pool->current; p->d.next; p = p->d.next) {
         if (p->d.failed++ > 4) {
-            pool->current = p->d.next;
+            pool->current = p->d.next;			//将申请好的节点加入到内存池
         }
     }
 
@@ -313,13 +313,13 @@ ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
 {
     ngx_pool_cleanup_t  *c;
 
-    c = ngx_palloc(p, sizeof(ngx_pool_cleanup_t));
+    c = ngx_palloc(p, sizeof(ngx_pool_cleanup_t));		//申请存放ngx_pool_cleanup_t结构体数据的空间
     if (c == NULL) {
         return NULL;
     }
 
     if (size) {
-        c->data = ngx_palloc(p, size);
+        c->data = ngx_palloc(p, size);		//申请存放目标数据的空间
         if (c->data == NULL) {
             return NULL;
         }

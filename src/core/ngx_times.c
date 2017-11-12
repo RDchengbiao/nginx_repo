@@ -84,7 +84,7 @@ ngx_time_update(void)
     ngx_time_t      *tp;
     struct timeval   tv;
 
-    if (!ngx_trylock(&ngx_time_lock)) {
+    if (!ngx_trylock(&ngx_time_lock)) {		//使用ngx_time_lock进行写加锁
         return;
     }
 
@@ -114,10 +114,10 @@ ngx_time_update(void)
     tp->sec = sec;
     tp->msec = msec;
 
-    ngx_gmtime(sec, &gmt);
+    ngx_gmtime(sec, &gmt);		//转换成可读的时间格式
 
 
-    p0 = &cached_http_time[slot][0];
+    p0 = &cached_http_time[slot][0];	//用于记录http请求的时间
 
     (void) ngx_sprintf(p0, "%s, %02d %s %4d %02d:%02d:%02d GMT",
                        week[gmt.ngx_tm_wday], gmt.ngx_tm_mday,
@@ -144,7 +144,7 @@ ngx_time_update(void)
 #endif
 
 
-    p1 = &cached_err_log_time[slot][0];
+    p1 = &cached_err_log_time[slot][0];		//用于记录错误日志的时间
 
     (void) ngx_sprintf(p1, "%4d/%02d/%02d %02d:%02d:%02d",
                        tm.ngx_tm_year, tm.ngx_tm_mon,
@@ -152,7 +152,7 @@ ngx_time_update(void)
                        tm.ngx_tm_min, tm.ngx_tm_sec);
 
 
-    p2 = &cached_http_log_time[slot][0];
+    p2 = &cached_http_log_time[slot][0];		//用于记录http请求日志的时间
 
     (void) ngx_sprintf(p2, "%02d/%s/%d:%02d:%02d:%02d %c%02i%02i",
                        tm.ngx_tm_mday, months[tm.ngx_tm_mon - 1],
@@ -161,7 +161,7 @@ ngx_time_update(void)
                        tp->gmtoff < 0 ? '-' : '+',
                        ngx_abs(tp->gmtoff / 60), ngx_abs(tp->gmtoff % 60));
 
-    p3 = &cached_http_log_iso8601[slot][0];
+    p3 = &cached_http_log_iso8601[slot][0];		//符合iso8601标准格式的时间
 
     (void) ngx_sprintf(p3, "%4d-%02d-%02dT%02d:%02d:%02d%c%02i:%02i",
                        tm.ngx_tm_year, tm.ngx_tm_mon,
@@ -200,7 +200,7 @@ ngx_time_sigsafe_update(void)
     ngx_time_t      *tp;
     struct timeval   tv;
 
-    if (!ngx_trylock(&ngx_time_lock)) {
+    if (!ngx_trylock(&ngx_time_lock)) {		//加写锁
         return;
     }
 
@@ -210,7 +210,7 @@ ngx_time_sigsafe_update(void)
 
     tp = &cached_time[slot];
 
-    if (tp->sec == sec) {
+    if (tp->sec == sec) {		//如果和缓存的时间一样，不需要更新
         ngx_unlock(&ngx_time_lock);
         return;
     }
@@ -242,7 +242,7 @@ ngx_time_sigsafe_update(void)
 
     ngx_memory_barrier();
 
-    ngx_cached_err_log_time.data = p;
+    ngx_cached_err_log_time.data = p;		//更新ngx_cached_err_log_time中的时间
     ngx_cached_syslog_time.data = p2;
 
     ngx_unlock(&ngx_time_lock);

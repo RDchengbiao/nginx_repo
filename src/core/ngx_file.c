@@ -183,7 +183,7 @@ ngx_create_temp_file(ngx_file_t *file, ngx_path_t *path, ngx_pool_t *pool,
                        "temp fd:%d", file->fd);
 
         if (file->fd != NGX_INVALID_FILE) {
-
+			//如果处理函数可用，则先调用函数对数据进行适当处理，然后释放空间
             cln->handler = clean ? ngx_pool_delete_file : ngx_pool_cleanup_file;
             clnf = cln->data;
 
