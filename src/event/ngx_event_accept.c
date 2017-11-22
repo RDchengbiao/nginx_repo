@@ -113,6 +113,7 @@ ngx_event_accept(ngx_event_t *ev)
             }
 
             if (err == NGX_EMFILE || err == NGX_ENFILE) {
+				//是否接收了太多的事件
                 if (ngx_disable_accept_events((ngx_cycle_t *) ngx_cycle, 1)
                     != NGX_OK)
                 {
@@ -125,7 +126,7 @@ ngx_event_accept(ngx_event_t *ev)
                         ngx_accept_mutex_held = 0;
                     }
 
-                    ngx_accept_disabled = 1;
+                    ngx_accept_disabled = 1;			//接收了太多的事件，则拒绝更多事件
 
                 } else {
                     ngx_add_timer(ev, ecf->accept_mutex_delay);
@@ -645,6 +646,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "accept mutex locked");
 
+		//网络连接上没有返回任何事件
         if (ngx_accept_mutex_held && ngx_accept_events == 0) {
             return NGX_OK;
         }

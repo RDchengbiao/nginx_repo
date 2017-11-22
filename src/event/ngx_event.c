@@ -215,19 +215,22 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 #endif
     }
 
-    if (ngx_use_accept_mutex) {
+    if (ngx_use_accept_mutex) {			//如果启用了accept_mutex互斥量
         if (ngx_accept_disabled > 0) {
-            ngx_accept_disabled--;
+            ngx_accept_disabled--;			//设置accept_mutex互斥量
 
         } else {
+			//尝试获取accept_mutex互斥量
             if (ngx_trylock_accept_mutex(cycle) == NGX_ERROR) {
                 return;
             }
-
+			
+			//获取互斥量成功
             if (ngx_accept_mutex_held) {
-                flags |= NGX_POST_EVENTS;
+                flags |= NGX_POST_EVENTS;			//标记当前到来的事件已经被工作进程接收
 
             } else {
+				//推迟一段时间重新尝试获取互斥量
                 if (timer == NGX_TIMER_INFINITE
                     || timer > ngx_accept_mutex_delay)
                 {
@@ -239,16 +242,19 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
-    (void) ngx_process_events(cycle, timer, flags);
+    (void) ngx_process_events(cycle, timer, flags);		//调用各种事件驱动机制下的事件处理函数
 
     delta = ngx_current_msec - delta;
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "timer delta: %M", delta);
 
+	//ngx_posted_accept_events是存放事件的队列
+	//处理事件
     ngx_event_process_posted(cycle, &ngx_posted_accept_events);
 
     if (ngx_accept_mutex_held) {
+		//释放accept_mutex互斥量
         ngx_shmtx_unlock(&ngx_accept_mutex);
     }
 
