@@ -445,13 +445,13 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
 {
     ngx_int_t  i;
 
-    for (i = 0; i < ngx_last_process; i++) {
+    for (i = 0; i < ngx_last_process; i++) {		//遍历所有工作进程
 
         if (i == ngx_process_slot
             || ngx_processes[i].pid == -1
             || ngx_processes[i].channel[0] == -1)
         {
-            continue;
+            continue;		//当前工作进程没有工作
         }
 
         ngx_log_debug6(NGX_LOG_DEBUG_CORE, cycle->log, 0,
@@ -769,13 +769,13 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 
         ngx_process_events_and_timers(cycle);		//处理事件和定时器
 
-        if (ngx_terminate) {
+        if (ngx_terminate) {	//根据指令执行终止命令
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exiting");
 
             ngx_worker_process_exit(cycle);
         }
 
-        if (ngx_quit) {
+        if (ngx_quit) {		//根据指令关闭监听套接字，退出程序
             ngx_quit = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                           "gracefully shutting down");
@@ -788,7 +788,7 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
             }
         }
 
-        if (ngx_reopen) {
+        if (ngx_reopen) {		//根据指令重新开启工作进程
             ngx_reopen = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "reopening logs");
             ngx_reopen_files(cycle, -1);
@@ -1039,7 +1039,7 @@ ngx_channel_handler(ngx_event_t *ev)
 
     for ( ;; ) {
 
-        n = ngx_read_channel(c->fd, &ch, sizeof(ngx_channel_t), ev->log);
+        n = ngx_read_channel(c->fd, &ch, sizeof(ngx_channel_t), ev->log);	//读取进程通信信息
 
         ngx_log_debug1(NGX_LOG_DEBUG_CORE, ev->log, 0, "channel: %i", n);
 
@@ -1066,7 +1066,7 @@ ngx_channel_handler(ngx_event_t *ev)
         ngx_log_debug1(NGX_LOG_DEBUG_CORE, ev->log, 0,
                        "channel command: %ui", ch.command);
 
-        switch (ch.command) {
+        switch (ch.command) {	//解析通信信息
 
         case NGX_CMD_QUIT:
             ngx_quit = 1;

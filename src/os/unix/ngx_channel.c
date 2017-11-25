@@ -26,7 +26,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
         char            space[CMSG_SPACE(sizeof(int))];
     } cmsg;
 
-    if (ch->fd == -1) {
+    if (ch->fd == -1) {			//打开的管道出错
         msg.msg_control = NULL;
         msg.msg_controllen = 0;
 
@@ -36,6 +36,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 
         ngx_memzero(&cmsg, sizeof(cmsg));
 
+		//设置消息发送缓冲区
         cmsg.cm.cmsg_len = CMSG_LEN(sizeof(int));
         cmsg.cm.cmsg_level = SOL_SOCKET;
         cmsg.cm.cmsg_type = SCM_RIGHTS;
@@ -49,13 +50,13 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
          * Fortunately, gcc with -O1 compiles this ngx_memcpy()
          * in the same simple assignment as in the code above
          */
-
+		//复制准备发送的消息到发送缓冲区
         ngx_memcpy(CMSG_DATA(&cmsg.cm), &ch->fd, sizeof(int));
     }
 
     msg.msg_flags = 0;
 
-#else
+#else			//不使用管道进行进程间通信
 
     if (ch->fd == -1) {
         msg.msg_accrights = NULL;
@@ -76,7 +77,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     msg.msg_iov = iov;
     msg.msg_iovlen = 1;
 
-    n = sendmsg(s, &msg, 0);
+    n = sendmsg(s, &msg, 0);		//通过通信通道发送消息
 
     if (n == -1) {
         err = ngx_errno;
@@ -125,9 +126,9 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
     msg.msg_accrightslen = sizeof(int);
 #endif
 
-    n = recvmsg(s, &msg, 0);
+    n = recvmsg(s, &msg, 0);		//接收消息
 
-    if (n == -1) {
+    if (n == -1) {					//接收消息出错
         err = ngx_errno;
         if (err == NGX_EAGAIN) {
             return NGX_AGAIN;
@@ -137,12 +138,12 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
         return NGX_ERROR;
     }
 
-    if (n == 0) {
+    if (n == 0) {					//接收到的消息长度为0
         ngx_log_debug0(NGX_LOG_DEBUG_CORE, log, 0, "recvmsg() returned zero");
         return NGX_ERROR;
     }
 
-    if ((size_t) n < sizeof(ngx_channel_t)) {
+    if ((size_t) n < sizeof(ngx_channel_t)) {		//接收到的消息有丢失
         ngx_log_error(NGX_LOG_ALERT, log, 0,
                       "recvmsg() returned not enough data: %z", n);
         return NGX_ERROR;
@@ -150,8 +151,9 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
 
 #if (NGX_HAVE_MSGHDR_MSG_CONTROL)
 
-    if (ch->command == NGX_CMD_OPEN_CHANNEL) {
+    if (ch->command == NGX_CMD_OPEN_CHANNEL) {		//按照指令处理管道里的消息
 
+		//以下是判断消息的正确性
         if (cmsg.cm.cmsg_len < (socklen_t) CMSG_LEN(sizeof(int))) {
             ngx_log_error(NGX_LOG_ALERT, log, 0,
                           "recvmsg() returned too small ancillary data");
@@ -169,6 +171,7 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
 
         /* ch->fd = *(int *) CMSG_DATA(&cmsg.cm); */
 
+		//提取缓存区中的消息
         ngx_memcpy(&ch->fd, CMSG_DATA(&cmsg.cm), sizeof(int));
     }
 

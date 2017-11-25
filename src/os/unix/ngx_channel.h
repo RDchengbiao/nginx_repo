@@ -15,10 +15,10 @@
 
 
 typedef struct {
-    ngx_uint_t  command;
-    ngx_pid_t   pid;
-    ngx_int_t   slot;
-    ngx_fd_t    fd;
+    ngx_uint_t  command;		//发送给目标进程的指令
+    ngx_pid_t   pid;			//发送消息进程的进程id
+    ngx_int_t   slot;			//发送消息进程在nginx进程表中的索引
+    ngx_fd_t    fd;				//发送消息进程接收消息的socket描述符，即发送消息进程的channel[1]
 } ngx_channel_t;
 
 
